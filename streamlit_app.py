@@ -1,39 +1,57 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import base64
 
-# إعداد واجهة البرنامج لتكون عريضة ومناسبة للجداول
-st.set_page_config(page_title="ملخص البيان الجمركي", layout="wide")
+# إعداد واجهة التطبيق
+st.set_page_config(page_title="مكتب أبو محمد للتخلص الجمركي", layout="centered")
 
-st.title("📑 نظام ملخص بيان الرسوم الجمركية")
-st.info("قم بتعبئة البيانات أدناه لاستخراج الملخص النهائي")
+# دالة لتحويل النص إلى ملف PDF بسيط (HTML-based)
+def create_pdf_link(content, filename):
+    b64 = base64.b64encode(content.encode('utf-8-sig')).decode()
+    return f'<a href="data:text/html;base64,{b64}" download="{filename}.html" style="text-decoration:none;"><button style="background-color:#1E3A8A; color:white; border-radius:5px; padding:10px;">📥 تحميل الفاتورة (PDF/HTML)</button></a>'
 
-# نموذج إدخال البيانات
-with st.form("customs_summary_form", clear_on_submit=False):
+# الهوية البصرية
+st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>🏗️ مكتب أبو محمد للتخليص الجمركي</h1>", unsafe_allow_html=True)
+st.divider()
+
+# نموذج الإدخال
+with st.form("abu_mohammed_pro", clear_on_submit=False):
+    st.subheader("📑 بيانات الفاتورة الجمركية")
     col1, col2 = st.columns(2)
-    
     with col1:
+        importer = st.text_input("اسم المستورد")
         driver_name = st.text_input("اسم السائق")
         truck_no = st.text_input("رقم القاطرة")
-        truck_type = st.selectbox("نوع القاطرة", ["فـلاب", "سطحة", "جوانب", "دينا", "آخر"])
-        route = st.text_input("خط السير (من - إلى)")
-
     with col2:
-        report_date = st.date_input("التاريخ", datetime.now())
-        # هنا ندخل عدد الأكياس في كل دفعة أو إجمالي مباشر
-        bags_per_batch = st.text_input("عدد الأكياس (مثلاً: 500+300+200 أو رقم واحد)", help="يمكنك كتابة أرقام وبينهما علامة +")
-        statement_ref = st.text_input("رقم البيان الجمركي")
+        truck_type = st.selectbox("نوع القاطرة", ["قاطرة فـلاب", "سطحة", "جوانب", "دينا"])
+        bags_count = st.number_input("عدد الأكياس", min_value=0)
+        total_fees = st.number_input("إجمالي الرسوم (ريال)", min_value=0.0)
+    
+    submit = st.form_submit_button("🚀 إصدار الفاتورة النهائية")
 
-    submit = st.form_submit_button("إصدار الملخص وحساب الإجمالي")
-
-# معالجة البيانات والحساب التلقائي
 if submit:
-    try:
-        # كود ذكي لحساب الإجمالي إذا أدخل المستخدم أرقاماً بينها علامة +
-        total_bags = sum([float(x.strip()) for x in bags_per_batch.split('+')]) if bags_per_batch else 0
+    if importer and driver_name:
+        # تصميم الفاتورة
+        invoice_content = f"""
+        <div style="direction: rtl; font-family: 'Arial'; border: 2px solid #1E3A8A; padding: 20px;">
+            <h2 style="text-align: center;">مكتب أبو محمد للتخليص الجمركي</h2>
+            <p><b>التاريخ:</b> {datetime.now().strftime('%Y-%m-%d')}</p>
+            <hr>
+            <p><b>اسم المستورد:</b> {importer}</p>
+            <p><b>اسم السائق:</b> {driver_name}</p>
+            <p><b>رقم القاطرة:</b> {truck_no}</p>
+            <p><b>الكمية:</b> {bags_count} كيس</p>
+            <h3 style="background-color: #f0f0f0; padding: 10px;">إجمالي الرسوم: {total_fees:,.2f} ريال</h3>
+        </div>
+        """
+        st.markdown(invoice_content, unsafe_allow_html=True)
         
-        st.success("✅ تم إصدار ملخص البيان بنجاح")
-        
+        # زر التحميل
+        st.markdown(create_pdf_link(invoice_content, f"فاتورة_{driver_name}"), unsafe_allow_html=True)
+        st.info("ملاحظة: اضغط على الزر أعلاه لحفظ الفاتورة على هاتفك.")
+    else:
+        st.error("يرجى إكمال البيانات أولاً")
         # عرض الملخص في جدول منسق
         summary_data = {
             "التاريخ": [report_date],
