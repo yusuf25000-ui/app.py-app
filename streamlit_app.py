@@ -2,49 +2,38 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# إعدادات الصفحة
-st.set_page_config(page_title="أبو محمد للتخليص", layout="wide")
+# 1. إعدادات الصفحة الأساسية
+st.set_page_config(page_title="مكتب أبو محمد للتخليص", layout="centered")
 
-# الرابط الخاص بجدولك
+# 2. رابط جدول جوجل الخاص بك
+# تأكد من أن الرابط هو نفس الذي أرسلته لي سابقاً
 SHEET_ID = "1D5mzjR7lFqs6t4C8V0dWVdFki7bEXKubcTVchJe5ohM"
 csv_url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
-st.title("🏗️ مكتب أبو محمد للتخليص الجمركي")
+# 3. واجهة البرنامج (الهوية البصرية)
+st.markdown("<h1 style='text-align: center; color: #1E3A8A;'>🏗️ مكتب أبو محمد للتخليص الجمركي</h1>", unsafe_allow_html=True)
+st.divider()
 
-# التبويبات
-tab1, tab2 = st.tabs(["📝 إدخال فاتورة", "📊 التقارير"])
+# 4. التبويبات (فاتورة وتقارير)
+tab1, tab2 = st.tabs(["📄 إصدار فاتورة", "📊 التقارير العامة"])
 
+# --- التبويب الأول: إصدار الفاتورة ---
 with tab1:
-    with st.form("main_form"):
-        imp = st.text_input("اسم المستورد")
-        drv = st.text_input("اسم السائق")
-        plate = st.text_input("رقم اللوحة")
-        bags = st.number_input("عدد الأكياس", min_value=0)
-        money = st.number_input("الرسوم الجمركية", min_value=0.0)
-        btn = st.form_submit_button("إصدار الفاتورة")
-    
-    if btn:
-        st.success("تم تجهيز بيانات الفاتورة")
-        # تصميم الفاتورة للعرض فقط
-        st.markdown(f"""
-        <div style="direction:rtl; border:2px solid #1e3a8a; padding:15px; border-radius:10px; text-align:right;">
-        <h3>فاتورة تخليص جمركي</h3>
-        <b>السائق:</b> {drv}<br>
-        <b>اللوحة:</b> {plate}<br>
-        <b>المستورد:</b> {imp}<br>
-        <b>الكمية:</b> {bags} كيس<br>
-        <h4 style="color:green;">الإجمالي: {money} ريال</h4>
-        </div>
-        """, unsafe_allow_html=True)
+    st.subheader("📝 إدخال بيانات المعاملة")
+    with st.form("invoice_form", clear_on_submit=False):
+        col1, col2 = st.columns(2)
+        with col1:
+            importer = st.text_input("اسم المستورد")
+            driver = st.text_input("اسم السائق")
+            plate = st.text_input("رقم القاطرة")
+        with col2:
+            bags = st.number_input("عدد الأكياس", min_value=0, step=1)
+            fees = st.number_input("الرسوم (ريال)", min_value=0.0)
+            date_in = st.date_input("التاريخ", datetime.now())
+        
+        submit = st.form_submit_button("✨ توليد الفاتورة")
 
-with tab2:
-    if st.button("تحديث البيانات من جوجل"):
-        try:
-            df = pd.read_csv(csv_url)
-            st.write("إحصائيات الجدول:")
-            st.dataframe(df)
-        except Exception as e:
-            st.error("تأكد من وجود بيانات في جدول جوجل شيت أولاً")
+    if submit:
         if importer and driver and plate:
             # عرض الفاتورة بتصميم احترافي
             st.markdown(f"""
@@ -102,4 +91,5 @@ with tab2:
             else:
                 st.warning("الجدول في جوجل شيت فارغ حالياً.")
         except Exception as e:
+            st.error("فشل في جلب البيانات. تأكد من أن جدول جوجل شيت يحتوي على بيانات وأن الرابط صحيح.")
             st.error("فشل في جلب البيانات. تأكد من أن جدول جوجل شيت يحتوي على بيانات وأن الرابط صحيح.")
