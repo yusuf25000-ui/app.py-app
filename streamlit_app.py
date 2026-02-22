@@ -64,4 +64,4 @@ with tab2:
     if st.button("تحديث البيانات"):
         df = pd.read_csv(csv_url)
         st.dataframe(df)
-https://raw.githubusercontent.com/yusuf23000-ui/app.py-app/main/7569.jpg
+
